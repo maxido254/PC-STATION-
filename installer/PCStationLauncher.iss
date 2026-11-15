@@ -30,6 +30,7 @@ Name: "startup"; Description: "Open the launcher when Windows starts (console st
 
 [Files]
 Source: "..\dist\PCStation-Launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: NeedsWebView2
 
 [Icons]
 Name: "{autoprograms}\PCStation Launcher"; Filename: "{app}\PCStation-Launcher.exe"
@@ -37,4 +38,20 @@ Name: "{autodesktop}\PCStation Launcher"; Filename: "{app}\PCStation-Launcher.ex
 Name: "{userstartup}\PCStation Launcher"; Filename: "{app}\PCStation-Launcher.exe"; Tasks: startup
 
 [Run]
+Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Installing the Microsoft WebView2 Runtime (the window engine)..."; Flags: waituntilterminated; Check: NeedsWebView2
 Filename: "{app}\PCStation-Launcher.exe"; Description: "Open PCStation Launcher"; Flags: nowait postinstall skipifsilent
+
+[Code]
+function HasWebView2(): Boolean;
+var v: String;
+begin
+  Result := RegQueryStringValue(HKLM, 'SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv', v)
+         or RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv', v)
+         or RegQueryStringValue(HKCU, 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv', v);
+  if Result then Result := (v <> '') and (v <> '0.0.0.0');
+end;
+
+function NeedsWebView2(): Boolean;
+begin
+  Result := not HasWebView2();
+end;

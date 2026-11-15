@@ -754,6 +754,7 @@ class Launcher:
         self.running = running
         self.native_pads = native_pads
         self._pads_cache = (0.0, {"xinput": 0, "other": []})
+        self.show = threading.Event()                                  # set when a second copy is started: bring the window forward
         self.quit = threading.Event()                                  # set when the user picks "Exit launcher"
         self.get_players = get_players or (lambda: [])
         self.opener = opener
@@ -1024,6 +1025,9 @@ def make_handler(L):
                         L.settings["magpie_path"] = mp
                     L.save_settings()
                     return self.send(200, {"settings": L.settings, "magpie_found": find_magpie(L.settings.get("magpie_path", ""))})
+                if api == "show":
+                    L.show.set()
+                    return self.send(200, {"ok": True})
                 if api == "category":
                     L.library.set_cat(str(b.get("id", "")), b.get("cat"))
                     return self.send(200, {"games": L.library.public()})

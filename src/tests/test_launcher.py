@@ -441,3 +441,43 @@ class PadsAndAppTests(unittest.TestCase):
         finally:
             srv.stop()
             tmp.cleanup()
+
+
+class AppWindowTests(unittest.TestCase):
+    def test_native_file_dialog_returns_the_chosen_path(self):
+        import pcstation_launcher_app as A
+
+        class FakeWindow:
+            def create_file_dialog(self, dialog, allow_multiple=False, file_types=()):
+                self.types = file_types
+                return ["C:\\Games\\game.exe"]
+
+        class FakeWebview:
+            OPEN_DIALOG = 10
+        api = A.NativeApi()
+        self.assertEqual(api.pick_file("exe"), "")                                      # no window yet
+        api._window, api._webview = FakeWindow(), FakeWebview()
+        self.assertEqual(api.pick_file("exe"), "C:\\Games\\game.exe")
+        self.assertIn("jpg", api._window.types[0])  if api.pick_file("image") else None
+
+    def test_run_window_is_false_without_pywebview(self):
+        import pcstation_launcher_app as A
+        tmp = tempfile.TemporaryDirectory()
+        srv = L.Launcher(directory=tmp.name, lookup=lambda n: None).start()
+        try:
+            self.assertFalse(A.run_window(srv, True))                                   # not installed here
+        finally:
+            srv.stop()
+            tmp.cleanup()
+
+    def test_show_request_sets_the_flag(self):
+        import pcstation_launcher_app as A
+        tmp = tempfile.TemporaryDirectory()
+        srv = L.Launcher(directory=tmp.name, lookup=lambda n: None).start()
+        try:
+            A.write_running(tmp.name, srv)
+            self.assertTrue(A.show_existing(tmp.name))
+            self.assertTrue(srv.show.is_set())
+        finally:
+            srv.stop()
+            tmp.cleanup()

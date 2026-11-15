@@ -714,7 +714,7 @@ function gameOptions(id) {
   menu(g.name, [
     { label: 'Play', fn: () => { pop(); launch(id); } },
     { label: 'Rename', fn: () => { pop(); osk('Rename game', g.name, async n => { setGames((await api('/api/rename', { id, name: n })).games); toast('Renamed ✓'); }); } },
-    { label: 'Change picture', sub: 'Choose an image from your PC', fn: () => { pop(); browse('', { image: true, onPick: async path => { try { setGames((await api('/api/setart', { id, path })).games); toast('Picture updated ✓'); pop(); } catch (e) { toast(e.message, true); } } }); } },
+    { label: 'Change picture', sub: 'Choose an image from your PC', fn: () => { pop(); pickPicture(id); } },
     { label: g.cat === 'media' ? 'Move to Games' : 'Move to Media', sub: g.cat === 'media' ? 'Show it in the Games row' : 'For streaming and video apps', fn: async () => { pop(); try { setGames((await api('/api/category', { id, cat: g.cat === 'media' ? 'game' : 'media' })).games); toast('Moved ✓'); } catch (e) { toast(e.message, true); } } },
     { label: 'Remove from library', danger: true, fn: () => { pop(); confirmRemove(g); } },
     { label: 'Cancel', fn: pop }]);
@@ -733,10 +733,25 @@ async function launch(id) {
 }
 
 // ---------------------------------------------------------------- add games
+async function nativePick(kind) {      // Windows' own file dialog when running as the app; undefined in a plain browser
+  const w = window.pywebview;
+  if (!w || !w.api || !w.api.pick_file) return undefined;
+  try { return (await w.api.pick_file(kind)) || ''; } catch (e) { return undefined; }
+}
+async function addPath(path) {
+  try { const a = await api('/api/add', { path }); setGames(a.games); const nm = path.split(/[\\/]/).pop().replace(/\.[^.]+$/, ''); toast(a.added ? 'Added ' + nm + ' ✓' : 'Already in your library'); if (a.added) play('pick'); } catch (e) { toast(e.message, true); }
+}
+async function pickPicture(id) {
+  const apply = async path => { try { setGames((await api('/api/setart', { id, path })).games); toast('Picture updated ✓'); return true; } catch (e) { toast(e.message, true); return false; } };
+  const p = await nativePick('image');
+  if (p === undefined) browse('', { image: true, onPick: async path => { if (await apply(path)) pop(); } });
+  else if (p) apply(p);
+}
 function openAdd() {
   menu('Add games', [
     { label: 'Scan this PC for games', sub: 'Finds installed Steam, Epic Games and GOG games', fn: () => { pop(); scan(); } },
-    { label: 'Browse for an app or game', sub: 'Pick any program (.exe) or shortcut on your PC', fn: () => { pop(); browse(''); } },
+    { label: 'Browse for an app or game', sub: 'Pick any program (.exe) or shortcut on your PC', fn: async () => { pop(); const p = await nativePick('exe'); if (p === undefined) browse(''); else if (p) addPath(p); } },
+    { label: 'Browse with your controller', sub: 'Move through folders using the gamepad', fn: () => { pop(); browse(''); } },
     { label: 'Cancel', fn: pop }]);
 }
 async function scan() {
@@ -932,7 +947,9 @@ function settingsScreen() {
     { sec: 'Display' },
     Object.assign(T('magpie'), { label: 'FSR upscaling with Magpie', sub: 'Starts Magpie for you whenever you launch a game. Turn on FSR in Magpie’s profile for the game' }),
     { k: 'magpie_path', label: 'Magpie location', sub: () => S.magpieFound ? S.magpieFound : 'Not found. Install Magpie, then pick Magpie.exe here', val: () => S.magpieFound ? 'Found' : 'Choose…',
-      fn: () => { browse('', { onPick: async path => { try { await saveSetting({ magpie_path: path }); toast('Magpie location saved ✓'); pop(); s.render(); } catch (e) { toast(e.message, true); } } }); }, noRender: true },
+      fn: async () => { const save = async path => { try { await saveSetting({ magpie_path: path }); toast('Magpie location saved ✓'); return true; } catch (e) { toast(e.message, true); return false; } };
+        const p = await nativePick('exe');
+        if (p === undefined) browse('', { onPick: async path => { if (await save(path)) { pop(); s.render(); } } }); else if (p && await save(p)) s.render(); }, noRender: true },
     { sec: 'System' },
     { k: 'replay', label: 'Replay the startup intro', sub: 'See it again right now', val: () => '', fn: () => { pop(); runBoot(); }, noRender: true },
     { k: 'exit', label: 'Exit launcher', sub: 'Closes the launcher. Your games keep running', val: () => '', fn: () => confirmExit(), noRender: true }];
@@ -1005,6 +1022,7 @@ function runBoot() {
 
 // ---------------------------------------------------------------- header + startup
 const clock = () => { $('#clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
+document.addEventListener('contextmenu', e => e.preventDefault());
 let nativeSig = null;
 async function pollNative() {           // controllers Windows can see even before one is pressed (the browser only lists them after a button press)
   try {
