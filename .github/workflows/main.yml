@@ -35,6 +35,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
       - name: Tests on Windows (informational)
         continue-on-error: true
+        timeout-minutes: 5
         run: python -m unittest discover -s src/tests -v
       - name: Build the launcher exe
         run: pyinstaller --onefile --windowed --name PCStation-Launcher --icon branding/icon.ico --paths src --collect-all webview src/pcstation_launcher_app.py
