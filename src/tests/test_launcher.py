@@ -458,17 +458,42 @@ class AppWindowTests(unittest.TestCase):
         self.assertEqual(api.pick_file("exe"), "")                                      # no window yet
         api._window, api._webview = FakeWindow(), FakeWebview()
         self.assertEqual(api.pick_file("exe"), "C:\\Games\\game.exe")
-        self.assertIn("jpg", api._window.types[0])  if api.pick_file("image") else None
+        api.pick_file("image")
+        self.assertIn("jpg", api._window.types[0])
 
-    def test_run_window_is_false_without_pywebview(self):
+    def _run_window(self, fake):
+        """run_window with a stand-in for pywebview (None = not installed), so no real window ever opens."""
+        import types
+        import unittest.mock as mock
         import pcstation_launcher_app as A
         tmp = tempfile.TemporaryDirectory()
         srv = L.Launcher(directory=tmp.name, lookup=lambda n: None).start()
         try:
-            self.assertFalse(A.run_window(srv, True))                                   # not installed here
+            with mock.patch.dict(sys.modules, {"webview": fake}):
+                return A.run_window(srv, True), srv
         finally:
             srv.stop()
             tmp.cleanup()
+
+    def test_run_window_is_false_without_pywebview(self):
+        ok, _ = self._run_window(None)                                                  # None makes "import webview" fail
+        self.assertFalse(ok)
+
+    def test_run_window_opens_one_window_and_runs_the_loop(self):
+        import types
+        calls = {}
+        fake = types.ModuleType("webview")
+
+        class Win:
+            def destroy(self):
+                pass
+        fake.create_window = lambda title, url, **kw: calls.update(title=title, url=url, kw=kw) or Win()
+        fake.start = lambda **kw: calls.update(started=True)
+        ok, srv = self._run_window(fake)
+        self.assertTrue(ok)
+        self.assertTrue(calls["started"])
+        self.assertTrue(calls["kw"]["fullscreen"])
+        self.assertIn("js_api", calls["kw"])
 
     def test_show_request_sets_the_flag(self):
         import pcstation_launcher_app as A
