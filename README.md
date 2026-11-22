@@ -1,6 +1,6 @@
 # PCStation Launcher
 
-A fullscreen, controller-driven game launcher for Windows, by Maxido Entertainment. It was split out of PCStation Gamepad so it can grow on its own (toward the Godzilla X console experience).
+A fullscreen, controller-driven game launcher for Windows, by maxidoizooh254. It was split out of PCStation Gamepad so it can grow on its own (toward the Godzilla X console experience).
 
 ## What it does
 - Runs as its own app window (fullscreen, no browser or address bar) using Windows' built-in WebView2. Adding an app or choosing a picture opens the normal Windows file dialog; "Browse with your controller" gives a gamepad-friendly browser. The setup installs the Microsoft WebView2 Runtime (the window engine, not the Edge browser) if the PC lacks it. It never opens in Edge or any browser; `--browser` exists for developers only.

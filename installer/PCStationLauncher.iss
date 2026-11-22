@@ -7,7 +7,7 @@
 AppId={{6B0E5C1A-3F52-4D0B-9C7E-7A1D2E8F4B93}
 AppName=PCStation Launcher
 AppVersion={#AppVersion}
-AppPublisher=Maxido Entertainment
+AppPublisher=maxidoizooh254
 DefaultDirName={autopf}\PCStation Launcher
 DefaultGroupName=PCStation Launcher
 DisableProgramGroupPage=yes

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- PCStation Launcher installer (WiX Toolset v5). __VERSION__ is filled in by the build workflow. -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Package Name="PCStation Launcher" Manufacturer="Maxido Entertainment" Version="__VERSION__"
+  <Package Name="PCStation Launcher" Manufacturer="maxidoizooh254" Version="__VERSION__"
            UpgradeCode="6B0E5C1A-3F52-4D0B-9C7E-7A1D2E8F4B93" Scope="perMachine" Language="1033">
 
     <SummaryInformation Description="PCStation Launcher: a controller-friendly game launcher for Windows." />
@@ -10,7 +10,7 @@
 
     <Icon Id="AppIcon.ico" SourceFile="icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
-    <Property Id="ARPCOMMENTS" Value="By Maxido Entertainment" />
+    <Property Id="ARPCOMMENTS" Value="By maxidoizooh254" />
 
     <!-- Is the Microsoft WebView2 runtime (the window engine) already on this PC? -->
     <Property Id="WV2">

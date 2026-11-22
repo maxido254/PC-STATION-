@@ -605,7 +605,7 @@ function settingsScreen() {
     { k: 'volume', label: 'Volume', sub: 'How loud the launcher sounds are', val: () => VOL_NAMES[S.settings.volume], fn: () => saveSetting({ volume: S.settings.volume % 3 + 1 }), after: () => play('ok') },
     { sec: 'Appearance' },
     { k: 'theme', label: 'Theme', sub: 'Colour of the home screen background', val: () => THEMES[S.settings.theme] || 'Blue', fn: () => saveSetting({ theme: cycle(THEMES, S.settings.theme) }) },
-    Object.assign(T('intro'), { label: 'Startup intro', sub: 'Play the Maxido Entertainment intro when the launcher opens' }),
+    Object.assign(T('intro'), { label: 'Startup intro', sub: 'Play the maxidoizooh254 intro when the launcher opens' }),
     { sec: 'Games' },
     Object.assign(T('art_download'), { label: 'Download game pictures and logos', sub: 'Fetches covers, backgrounds and logos from the internet for games that have none on this PC', after: () => S.settings.art_download && refreshArt(true) }),
     { k: 'art_now', label: 'Get missing pictures now', sub: 'Retries every game that has no cover, background or logo', val: () => '', fn: () => refreshArt(true), noRender: true },
@@ -630,13 +630,13 @@ function settingsScreen() {
       r.onclick = async () => { try { await rw.fn(); } catch (e) { return toast(e.message, true); } if (!rw.noRender) { s.render(); rw.after && rw.after(); } };
       list.append(r);
     });
-    s.el.append(list, el('div', 'about', 'PCStation Launcher · by Maxido Entertainment<br>Works with Xbox, PlayStation, Switch and most other controllers. Games you add are saved on this PC.<br>FSR: in Magpie add a profile for the game (or use its auto-scale), pick an FSR effect, and PCStation will start Magpie for you.'));
+    s.el.append(list, el('div', 'about', 'PCStation Launcher · by maxidoizooh254<br>Works with Xbox, PlayStation, Switch and most other controllers. Games you add are saved on this PC.<br>FSR: in Magpie add a profile for the game (or use its auto-scale), pick an FSR effect, and PCStation will start Magpie for you.'));
     if (cur() === s) { const f = focusables(); setFocus(f.find(x => x.dataset.k === keep) || f[0]); }
   };
   s.render(); push(s);
 }
 
-// ---------------------------------------------------------------- startup intro (Maxido Entertainment, then PCStation Launcher)
+// ---------------------------------------------------------------- startup intro (maxidoizooh254, then PCStation Launcher)
 let bootActive = false, bootSkip = null;
 function runBoot() {
   return new Promise(resolve => {
