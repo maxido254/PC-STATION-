@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PCStation Launcher installer (WiX Toolset v5). __VERSION__ is filled in by the build workflow. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PCStation Launcher" Manufacturer="Maxido Entertainment" Version="__VERSION__"
+           UpgradeCode="6B0E5C1A-3F52-4D0B-9C7E-7A1D2E8F4B93" Scope="perMachine" Language="1033">
+
+    <SummaryInformation Description="PCStation Launcher: a controller-friendly game launcher for Windows." />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of PCStation Launcher is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.ico" SourceFile="icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="ARPCOMMENTS" Value="By Maxido Entertainment" />
+
+    <!-- Is the Microsoft WebView2 runtime (the window engine) already on this PC? -->
+    <Property Id="WV2">
+      <RegistrySearch Id="Wv2Wow" Root="HKLM" Key="SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" Name="pv" Type="raw" />
+      <RegistrySearch Id="Wv2Plain" Root="HKLM" Key="SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" Name="pv" Type="raw" />
+    </Property>
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="PCStation Launcher" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="AppExe" Guid="*">
+        <File Id="AppExeFile" Source="PCStation-Launcher.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="PCStation Launcher"
+                    Description="Game launcher" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" />
+          <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="PCStation Launcher"
+                    Description="Game launcher" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" />
+        </File>
+      </Component>
+      <Component Id="Wv2Setup" Guid="*">
+        <File Id="Wv2SetupFile" Source="MicrosoftEdgeWebview2Setup.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Installs the WebView2 runtime only when the PC does not have it -->
+    <CustomAction Id="InstallWebView2" Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[INSTALLFOLDER]MicrosoftEdgeWebview2Setup.exe&quot; /silent /install"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="InstallWebView2" After="InstallFiles" Condition="NOT Installed AND NOT WV2" />
+    </InstallExecuteSequence>
+
+    <Feature Id="Main" Title="PCStation Launcher" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+  </Package>
+</Wix>

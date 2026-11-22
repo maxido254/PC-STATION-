@@ -44,42 +44,38 @@ jobs:
         run: python -m unittest discover -s src/tests -v
       - name: Build the launcher exe
         run: pyinstaller --onefile --windowed --name PCStation-Launcher --icon branding/icon.ico --paths src --collect-all webview src/pcstation_launcher_app.py
-      - name: Install Inno Setup
-        run: choco install innosetup -y --no-progress
       - name: Get the WebView2 runtime installer (bundled so the app never needs a browser)
         run: |
           mkdir -p dist
           curl -L -o dist/MicrosoftEdgeWebview2Setup.exe "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
           ls -la dist
-      - name: Set app version
-        id: app_version
+      - name: Install WiX Toolset
         run: |
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Build the setup program
+          dotnet tool install --global wix --version 5.0.2
+          echo "$USERPROFILE\\.dotnet\\tools" >> "$GITHUB_PATH"
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          wix --version
+      - name: Build the MSI
         run: |
-          mkdir -p dist
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "//DAppVersion=${{ steps.app_version.outputs.value }}" installer/PCStationLauncher.iss
-          ls -la dist
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          mkdir -p build
+          cp installer/Product.wxs build/Product.wxs
+          cp dist/PCStation-Launcher.exe dist/MicrosoftEdgeWebview2Setup.exe build/
+          cp branding/icon.ico build/
+          cd build
+          sed -i "s/__VERSION__/1.0.${GITHUB_RUN_NUMBER}/" Product.wxs
+          wix build -arch x64 -o PCStation-Launcher.msi Product.wxs
+          ls -la
       - uses: actions/upload-artifact@v4
         with:
-          name: PCStation-Launcher-Setup
-          path: dist/PCStation-Launcher-Setup.exe
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PCStation-Launcher-Portable
-          path: dist/PCStation-Launcher.exe
+          name: PCStation-Launcher-Installer
+          path: build/PCStation-Launcher.msi
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v1.0.{0}', github.run_number) }}
           name: PCStation Launcher ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v1.0.{0}', github.run_number) }}
-          body: PCStation Launcher. Run PCStation-Launcher-Setup.exe to install, or PCStation-Launcher.exe to run it without installing.
+          body: PCStation Launcher for Windows. Download PCStation-Launcher.msi and open it to install.
           prerelease: false
-          files: |
-            dist/PCStation-Launcher-Setup.exe
-            dist/PCStation-Launcher.exe
+          files: build/PCStation-Launcher.msi
